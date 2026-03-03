@@ -1,0 +1,126 @@
+yamlname: Build Videos JSON
+
+on:
+  push:
+    paths:
+      - 'content/**'
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate videos.json
+        run: |
+          python3 << 'EOF'
+          import os, json, re
+
+          def parse_frontmatter(filepath):
+              with open(filepath, 'r') as f:
+                  text = f.read()
+              match = re.match(r'^---\n(.*?)\n---', text, re.DOTALL)
+              if not match:
+                  return {}
+              data = {}
+              current_key = None
+              in_list = False
+              list_items = []
+              for line in match.group(1).split('\n'):
+                  list_match = re.match(r'^\s+-\s+(.*)', line)
+                  if list_match:
+                      val = list_match.group(1).strip().strip('"').strip("'")
+                      list_items.append(val)
+                      continue
+                  if in_list and current_key:
+                      data[current_key] = list_items
+                      in_list = False
+                      list_items = []
+                  kv_match = re.match(r'^(\w+):\s*(.*)', line)
+                  if kv_match:
+                      current_key = kv_match.group(1)
+                      raw_val = kv_match.group(2).strip()
+                      if raw_val == '' or raw_val == '[]':
+                          in_list = True
+                          list_items = []
+                          if raw_val == '[]':
+                              data[current_key] = []
+                              in_list = False
+                      else:
+                          val = raw_val.strip('"').strip("'")
+                          if val == 'true': val = True
+                          elif val == 'false': val = False
+                          else:
+                              try: val = int(val)
+                              except:
+                                  try: val = float(val)
+                                  except: pass
+                          data[current_key] = val
+              if in_list and current_key:
+                  data[current_key] = list_items
+              return data
+
+          def load_videos(folder, is_featured):
+              videos = []
+              if not os.path.exists(folder):
+                  return videos
+              for fname in os.listdir(folder):
+                  if not fname.endswith('.md'):
+                      continue
+                  data = parse_frontmatter(os.path.join(folder, fname))
+                  if not data.get('title'):
+                      continue
+                  thumb = data.get('thumb', '')
+                  if thumb and not thumb.startswith('http'):
+                      thumb = '/' + thumb.lstrip('/')
+                  videos.append({
+                      'title': data.get('title', ''),
+                      'desc': data.get('desc', ''),
+                      'code': data.get('code', ''),
+                      'duration': data.get('duration', '0:00'),
+                      'tags': data.get('tags', []),
+                      'thumb': thumb,
+                      'chatLink': data.get('chatLink', 'https://onlyfans.com/my/chats/chat/38191075/'),
+                      'sale': data.get('sale', False) is True,
+                      'order': data.get('order', 99)
+                  })
+              videos.sort(key=lambda v: v.get('order', 99))
+              return videos
+
+          settings = {}
+          sections_path = 'content/settings/sections.md'
+          if os.path.exists(sections_path):
+              s = parse_frontmatter(sections_path)
+              settings['featuredTitle'] = s.get('featuredTitle', 'Featured')
+              settings['gridTitle'] = s.get('gridTitle', 'All Videos')
+
+          promo_path = 'content/settings/promo.md'
+          if os.path.exists(promo_path):
+              p = parse_frontmatter(promo_path)
+              settings['promoActive'] = p.get('active', True)
+              settings['promoText'] = p.get('text', '')
+
+          result = {
+              'featured': load_videos('content/featured', True),
+              'videos': load_videos('content/videos', False),
+              'settings': settings
+          }
+
+          with open('videos.json', 'w') as f:
+              json.dump(result, f, indent=2)
+
+          print(f"Generated videos.json: {len(result['featured'])} featured, {len(result['videos'])} grid videos")
+          EOF
+
+      - name: Commit videos.json
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add videos.json
+          git diff --cached --quiet || git commit -m "Auto-update videos.json"
+          git push

@@ -633,124 +633,195 @@ body {
 <script>
 /*
 ====================================================================
-  VIDEO DATA
-
-  ADD: copy a block, paste it, fill in ur info
-  REMOVE: delete from { to },
-  REORDER: move blocks up/down
-  SALE: change sale: false to sale: true
-  FEATURED: change featured: false to featured: true
-  TAGS: add as many tags as u want in the array
+  NANO_NANO CATALOG ENGINE
+  
+  Videos are managed through the CMS at nanonano.store/admin
+  This script fetches video data from ur GitHub repo automatically.
+  
+  GITHUB CONFIG: Update these if ur repo changes
 ====================================================================
 */
-const VIDEOS = [
-  {
-    title: "Sample Video One",
-    desc: "Placeholder description. Replace with ur real video info!",
-    code: "VIDEO #NANO001",
-    duration: "12:34",
-    tags: ["solo", "lingerie", "tease"],
-    category: "Popular",
-    thumb: "",
-    chatLink: "https://onlyfans.com/my/chats/chat/38191075/",
-    sale: false,
-    featured: true
-  },
-  {
-    title: "Sample Video Two",
-    desc: "Another placeholder. Describe what makes this one special!",
-    code: "VIDEO #NANO002",
-    duration: "8:15",
-    tags: ["couple", "romantic", "intimate"],
-    category: "Popular",
-    thumb: "",
-    chatLink: "https://onlyfans.com/my/chats/chat/38191075/",
-    sale: false,
-    featured: true
-  },
-  {
-    title: "Holiday Special",
-    desc: "Seasonal content goes here. Match with the promo banner above!",
-    code: "VIDEO #NANO003",
-    duration: "15:22",
-    tags: ["holiday", "special", "discount"],
-    category: "Specials",
-    thumb: "",
-    chatLink: "https://onlyfans.com/my/chats/chat/38191075/",
-    sale: true,
-    featured: true
-  },
-  {
-    title: "Collab Feature",
-    desc: "Collab content placeholder. Add partner details!",
-    code: "VIDEO #NANO004",
-    duration: "22:10",
-    tags: ["collab", "threesome"],
-    category: "Collabs",
-    thumb: "",
-    chatLink: "https://onlyfans.com/my/chats/chat/38191075/",
-    sale: false,
-    featured: true
-  },
-  {
-    title: "Solo Session",
-    desc: "Solo content placeholder. Set the mood and vibe.",
-    code: "VIDEO #NANO005",
-    duration: "10:45",
-    tags: ["solo", "toys", "intimate"],
-    category: "Solo",
-    thumb: "",
-    chatLink: "https://onlyfans.com/my/chats/chat/38191075/",
-    sale: false,
-    featured: false
-  },
-  {
-    title: "Behind The Scenes",
-    desc: "BTS placeholder. A peek behind the curtain.",
-    code: "VIDEO #NANO006",
-    duration: "5:30",
-    tags: ["bts", "casual", "fun"],
-    category: "Behind The Scenes",
-    thumb: "",
-    chatLink: "https://onlyfans.com/my/chats/chat/38191075/",
-    sale: false,
-    featured: false
-  },
-  {
-    title: "Morning Vibes",
-    desc: "Another placeholder for ur catalog. Fill it in with the real thing!",
-    code: "VIDEO #NANO007",
-    duration: "9:42",
-    tags: ["couple", "intimate", "romantic"],
-    category: "Popular",
-    thumb: "",
-    chatLink: "https://onlyfans.com/my/chats/chat/38191075/",
-    sale: false,
-    featured: false
-  },
-  {
-    title: "Late Night",
-    desc: "Placeholder for late night content. Set the scene!",
-    code: "VIDEO #NANO008",
-    duration: "14:18",
-    tags: ["solo", "lingerie", "tease"],
-    category: "Solo",
-    thumb: "",
-    chatLink: "https://onlyfans.com/my/chats/chat/38191075/",
-    sale: false,
-    featured: false
-  }
-];
+const GITHUB_USER = "NanoNanoHi";
+const GITHUB_REPO = "nano-nano-catalog";
+const GITHUB_BRANCH = "main";
 
-// Section titles
-const FEATURED_TITLE = "Featured";
-const GRID_TITLE = "All Videos";
-
-// ====================================================================
-// ENGINE
-// ====================================================================
+let VIDEOS = [];
+let FEATURED_TITLE = "Featured";
+let GRID_TITLE = "All Videos";
 let activeTag = null;
 
+// ====================================================================
+// MARKDOWN PARSER — reads frontmatter from CMS files
+// ====================================================================
+function parseFrontmatter(text) {
+  const match = text.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return {};
+  const data = {};
+  let currentKey = null;
+  let inList = false;
+  let listItems = [];
+
+  match[1].split('\n').forEach(line => {
+    // List item
+    if (line.match(/^\s+-\s+/)) {
+      const val = line.replace(/^\s+-\s+/, '').trim().replace(/^["']|["']$/g, '');
+      listItems.push(val);
+      return;
+    }
+    // Save previous list
+    if (inList && currentKey) {
+      data[currentKey] = listItems;
+      inList = false;
+      listItems = [];
+    }
+    // Key-value pair
+    const kvMatch = line.match(/^(\w+):\s*(.*)/);
+    if (kvMatch) {
+      currentKey = kvMatch[1];
+      const rawVal = kvMatch[2].trim();
+      if (rawVal === '' || rawVal === '[]') {
+        inList = true;
+        listItems = [];
+        if (rawVal === '[]') {
+          data[currentKey] = [];
+          inList = false;
+        }
+      } else {
+        // Parse value
+        let val = rawVal.replace(/^["']|["']$/g, '');
+        if (val === 'true') val = true;
+        else if (val === 'false') val = false;
+        else if (!isNaN(val) && val !== '') val = Number(val);
+        data[currentKey] = val;
+      }
+    }
+  });
+  // Save final list
+  if (inList && currentKey) {
+    data[currentKey] = listItems;
+  }
+  return data;
+}
+
+// ====================================================================
+// GITHUB FETCH — pulls content files from the repo
+// ====================================================================
+async function fetchGitHubDir(path) {
+  try {
+    const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${path}?ref=${GITHUB_BRANCH}`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (e) {
+    console.error('Error fetching', path, e);
+    return [];
+  }
+}
+
+async function fetchFileContent(downloadUrl) {
+  try {
+    const res = await fetch(downloadUrl);
+    if (!res.ok) return '';
+    return await res.text();
+  } catch (e) {
+    console.error('Error fetching file', e);
+    return '';
+  }
+}
+
+async function loadVideos() {
+  // Show loading state
+  document.getElementById('grid').innerHTML = '<div class="no-results">Loading videos...</div>';
+
+  // Fetch featured videos
+  const featuredFiles = await fetchGitHubDir('content/featured');
+  const featuredPromises = featuredFiles
+    .filter(f => f.name.endsWith('.md'))
+    .map(async f => {
+      const text = await fetchFileContent(f.download_url);
+      const data = parseFrontmatter(text);
+      return {
+        title: data.title || 'Untitled',
+        desc: data.desc || '',
+        code: data.code || '',
+        duration: data.duration || '0:00',
+        tags: Array.isArray(data.tags) ? data.tags : [],
+        category: '',
+        thumb: data.thumb || '',
+        chatLink: data.chatLink || 'https://onlyfans.com/my/chats/chat/38191075/',
+        sale: data.sale === true,
+        featured: true,
+        order: typeof data.order === 'number' ? data.order : 99
+      };
+    });
+
+  // Fetch grid videos
+  const videoFiles = await fetchGitHubDir('content/videos');
+  const videoPromises = videoFiles
+    .filter(f => f.name.endsWith('.md'))
+    .map(async f => {
+      const text = await fetchFileContent(f.download_url);
+      const data = parseFrontmatter(text);
+      return {
+        title: data.title || 'Untitled',
+        desc: data.desc || '',
+        code: data.code || '',
+        duration: data.duration || '0:00',
+        tags: Array.isArray(data.tags) ? data.tags : [],
+        category: '',
+        thumb: data.thumb || '',
+        chatLink: data.chatLink || 'https://onlyfans.com/my/chats/chat/38191075/',
+        sale: data.sale === true,
+        featured: false,
+        order: typeof data.order === 'number' ? data.order : 99
+      };
+    });
+
+  const featured = await Promise.all(featuredPromises);
+  const videos = await Promise.all(videoPromises);
+
+  // Sort by order field
+  featured.sort((a, b) => a.order - b.order);
+  videos.sort((a, b) => a.order - b.order);
+
+  VIDEOS = [...featured, ...videos];
+
+  // Fetch settings
+  try {
+    const sectionsFiles = await fetchGitHubDir('content/settings');
+    for (const f of sectionsFiles) {
+      if (f.name === 'sections.md') {
+        const text = await fetchFileContent(f.download_url);
+        const data = parseFrontmatter(text);
+        if (data.featuredTitle) FEATURED_TITLE = data.featuredTitle;
+        if (data.gridTitle) GRID_TITLE = data.gridTitle;
+      }
+      if (f.name === 'promo.md') {
+        const text = await fetchFileContent(f.download_url);
+        const data = parseFrontmatter(text);
+        const promoEl = document.getElementById('promo');
+        if (data.active === false) {
+          promoEl.classList.remove('active');
+        } else {
+          promoEl.classList.add('active');
+          if (data.text) {
+            promoEl.querySelector('.promo-inner span').innerHTML = '<strong>' + data.text.split('—')[0].trim() + '</strong>' + (data.text.includes('—') ? ' — ' + data.text.split('—').slice(1).join('—').trim() : '');
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error loading settings', e);
+  }
+
+  // Render
+  renderTagMenu();
+  updateView();
+}
+
+// ====================================================================
+// RENDER HELPERS
+// ====================================================================
 function getAllTags() {
   const tags = new Set();
   VIDEOS.forEach(v => v.tags.forEach(t => tags.add(t)));
@@ -780,6 +851,14 @@ function placeholder() {
   return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360'%3E%3Crect fill='%23f2f2f2' width='640' height='360'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23cccccc' font-family='sans-serif' font-size='13' font-weight='600' letter-spacing='2'%3ETHUMBNAIL%3C/text%3E%3C/svg%3E`;
 }
 
+function getThumbUrl(thumb) {
+  if (!thumb) return placeholder();
+  // If it's already a full URL, use as-is
+  if (thumb.startsWith('http')) return thumb;
+  // If it's a repo-relative path (from CMS), build the raw GitHub URL
+  return `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${thumb.replace(/^\//, '')}`;
+}
+
 function buildCard(v, i) {
   const tagsHtml = v.tags.map(t =>
     `<span class="card-tag" onclick="setTag('${t}')">#${t}</span>`
@@ -788,7 +867,7 @@ function buildCard(v, i) {
   return `
     <div class="card" style="animation-delay:${Math.min(i * 0.04, 0.24)}s">
       <div class="card-thumb">
-        <img src="${v.thumb || placeholder()}" alt="${v.title}" loading="lazy">
+        <img src="${getThumbUrl(v.thumb)}" alt="${v.title}" loading="lazy">
         <div class="card-duration">${v.duration}</div>
         ${v.sale ? '<div class="card-sale">Sale</div>' : ''}
       </div>
@@ -943,9 +1022,8 @@ function copyCode(btn, code) {
 document.getElementById('searchInput').addEventListener('input', updateView);
 document.getElementById('scrollRow').addEventListener('scroll', updateArrows);
 
-// Init
-renderTagMenu();
-updateView();
+// Init — load videos from GitHub
+loadVideos();
 </script>
 </body>
 </html>

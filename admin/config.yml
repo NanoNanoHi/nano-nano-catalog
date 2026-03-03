@@ -1,0 +1,58 @@
+backend:
+  name: github
+  repo: NanoNanoHi/nano-nano-catalog
+  branch: main
+
+media_folder: "images"
+public_folder: "/images"
+
+collections:
+  - name: "featured_videos"
+    label: "Featured Videos (Scrollable Row)"
+    folder: "content/featured"
+    create: true
+    slug: "{{slug}}"
+    sortable_fields: ["title", "order"]
+    fields:
+      - { label: "Order (lower number = shows first)", name: "order", widget: "number", default: 0 }
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Description", name: "desc", widget: "text" }
+      - { label: "Video Code (e.g. VIDEO #NANO001)", name: "code", widget: "string" }
+      - { label: "Duration (e.g. 12:34)", name: "duration", widget: "string" }
+      - { label: "Thumbnail", name: "thumb", widget: "image", required: false }
+      - { label: "Tags (comma separated, e.g. solo, lingerie, tease)", name: "tags", widget: "list", default: [] }
+      - { label: "On Sale?", name: "sale", widget: "boolean", default: false }
+      - { label: "Chat Link", name: "chatLink", widget: "string", default: "https://onlyfans.com/my/chats/chat/38191075/" }
+
+  - name: "videos"
+    label: "All Videos (Main Grid)"
+    folder: "content/videos"
+    create: true
+    slug: "{{slug}}"
+    sortable_fields: ["title", "order"]
+    fields:
+      - { label: "Order (lower number = shows first)", name: "order", widget: "number", default: 0 }
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Description", name: "desc", widget: "text" }
+      - { label: "Video Code (e.g. VIDEO #NANO001)", name: "code", widget: "string" }
+      - { label: "Duration (e.g. 12:34)", name: "duration", widget: "string" }
+      - { label: "Thumbnail", name: "thumb", widget: "image", required: false }
+      - { label: "Tags (comma separated, e.g. solo, lingerie, tease)", name: "tags", widget: "list", default: [] }
+      - { label: "On Sale?", name: "sale", widget: "boolean", default: false }
+      - { label: "Chat Link", name: "chatLink", widget: "string", default: "https://onlyfans.com/my/chats/chat/38191075/" }
+
+  - name: "settings"
+    label: "Site Settings"
+    files:
+      - label: "Promo Banner"
+        name: "promo"
+        file: "content/settings/promo.md"
+        fields:
+          - { label: "Show Banner?", name: "active", widget: "boolean", default: true }
+          - { label: "Banner Text", name: "text", widget: "string", default: "SALE — Select videos at special pricing. DM for details." }
+      - label: "Section Titles"
+        name: "sections"
+        file: "content/settings/sections.md"
+        fields:
+          - { label: "Featured Row Title", name: "featuredTitle", widget: "string", default: "Featured" }
+          - { label: "Grid Section Title", name: "gridTitle", widget: "string", default: "All Videos" }

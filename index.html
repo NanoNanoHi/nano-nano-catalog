@@ -422,11 +422,30 @@ body {
   line-height: 1.6;
   margin-bottom: 10px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
   overflow: hidden;
   font-weight: 300;
 }
+.card-desc.expanded {
+  -webkit-line-clamp: unset;
+  display: block;
+}
+.card-readmore {
+  background: none;
+  border: none;
+  color: var(--gray-500);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 12px;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s;
+}
+.card-readmore:hover { color: var(--black); }
 
 /* Card tags */
 .card-tags {
@@ -873,7 +892,8 @@ function buildCard(v, i) {
       </div>
       <div class="card-body">
         <div class="card-title">${v.title}</div>
-        <div class="card-desc">${v.desc}</div>
+        <div class="card-desc" id="desc-${i}-${v.featured ? 'f' : 'g'}">${v.desc}</div>
+        <button class="card-readmore" id="rm-${i}-${v.featured ? 'f' : 'g'}" onclick="toggleReadMore('${i}-${v.featured ? 'f' : 'g'}')">read more</button>
         <div class="card-tags">${tagsHtml}</div>
         <div class="card-code-row">
           <span class="card-code">${v.code}</span>
@@ -958,6 +978,7 @@ function updateView() {
       resultsGrid.innerHTML = `<div class="no-results">No videos found.</div>`;
     } else {
       resultsGrid.innerHTML = results.map((v, i) => buildCard(v, i)).join('');
+      setTimeout(hideShortReadMores, 100);
     }
   } else {
     featuredSection.classList.remove('hidden');
@@ -968,6 +989,7 @@ function updateView() {
 
     renderFeatured();
     renderGrid();
+    setTimeout(hideShortReadMores, 100);
   }
 }
 
@@ -1015,6 +1037,32 @@ function copyCode(btn, code) {
     btn.textContent = 'Copied!';
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function toggleReadMore(id) {
+  const desc = document.getElementById('desc-' + id);
+  const btn = document.getElementById('rm-' + id);
+  if (desc.classList.contains('expanded')) {
+    desc.classList.remove('expanded');
+    btn.textContent = 'read more';
+  } else {
+    desc.classList.add('expanded');
+    btn.textContent = 'show less';
+  }
+}
+
+function hideShortReadMores() {
+  document.querySelectorAll('.card-desc').forEach(desc => {
+    const id = desc.id.replace('desc-', '');
+    const btn = document.getElementById('rm-' + id);
+    if (!btn) return;
+    // Check if text is actually clamped (scrollHeight > clientHeight)
+    if (desc.scrollHeight <= desc.clientHeight + 2) {
+      btn.style.display = 'none';
+    } else {
+      btn.style.display = '';
+    }
   });
 }
 

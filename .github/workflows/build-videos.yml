@@ -1,4 +1,4 @@
-yamlname: Build Videos JSON
+name: Build Videos JSON
 
 on:
   push:

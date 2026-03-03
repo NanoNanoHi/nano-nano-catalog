@@ -1,0 +1,54 @@
+{
+  "featured": [
+    {
+      "title": "Meow Media Yes",
+      "desc": "This is just a test so i picked out this video. If you've browsed reels or",
+      "code": "VIDEO #CAT0001",
+      "duration": "2:23",
+      "tags": [
+        "cats",
+        "song"
+      ],
+      "thumb": "/images/2026-03-03-13_51_08-nvidia-geforce-overlay-dt.png",
+      "chatLink": "https://onlyfans.com/my/chats/chat/38191075/",
+      "sale": true,
+      "order": 0
+    },
+    {
+      "title": "Sample Featured Video",
+      "desc": "This is a placeholder! But is it actually working rn",
+      "code": "VIDEO #NANO001",
+      "duration": "12:34",
+      "tags": [
+        "solo",
+        "lingerie"
+      ],
+      "thumb": "",
+      "chatLink": "https://onlyfans.com/my/chats/chat/38191075/",
+      "sale": false,
+      "order": 0
+    }
+  ],
+  "videos": [
+    {
+      "title": "Sample Video",
+      "desc": "This is a placeholder! Edit this in the CMS at nanonano.store/admin",
+      "code": "VIDEO #NANO005",
+      "duration": "10:45",
+      "tags": [
+        "solo",
+        "toys"
+      ],
+      "thumb": "",
+      "chatLink": "https://onlyfans.com/my/chats/chat/38191075/",
+      "sale": false,
+      "order": 0
+    }
+  ],
+  "settings": {
+    "featuredTitle": "Featured",
+    "gridTitle": "All Videos",
+    "promoActive": true,
+    "promoText": "SALE \u2014 Select videos at special pricing. DM for details."
+  }
+}

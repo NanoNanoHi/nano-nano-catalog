@@ -43,11 +43,17 @@ jobs:
                   thumb = data.get('thumb', '') or ''
                   if thumb and not thumb.startswith('http'):
                       thumb = '/' + thumb.lstrip('/')
+                  # Fix duration - YAML reads 2:23 as sexagesimal (143)
+                  raw_dur = data.get('duration', '0:00')
+                  if isinstance(raw_dur, int):
+                      mins = raw_dur // 60
+                      secs = raw_dur % 60
+                      raw_dur = f"{mins}:{secs:02d}"
                   videos.append({
                       'title': str(data.get('title', '')),
                       'desc': str(data.get('desc', '')),
                       'code': str(data.get('code', '')),
-                      'duration': str(data.get('duration', '0:00')),
+                      'duration': str(raw_dur),
                       'tags': data.get('tags', []) or [],
                       'thumb': thumb,
                       'chatLink': str(data.get('chatLink', 'https://onlyfans.com/my/chats/chat/38191075/')),

@@ -16,6 +16,6 @@ thumb: /images/materialdictionary206_72.jpg
 tags:
   - outdoor
   - cute
-sale: false
+sale: true
 chatLink: https://onlyfans.com/my/chats/chat/38191075/
 ---

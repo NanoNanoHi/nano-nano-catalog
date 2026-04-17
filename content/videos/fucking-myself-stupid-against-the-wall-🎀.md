@@ -9,8 +9,8 @@ code: "#NANO076"
 duration: 5:38
 thumb: https://nano-nano-thumbs.b-cdn.net/DW%2020.png
 tags:
-  - Wall dildo
-  - ""
+  - walldildo
+  - skirt
 sale: true
 chatLink: https://onlyfans.com/my/chats/chat/38191075/
 ---

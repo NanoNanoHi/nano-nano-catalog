@@ -13,6 +13,6 @@ tags:
   - CrotchlessPanty
   - pantyhose
   - stockings
-sale: true
+sale: false
 chatLink: https://onlyfans.com/my/chats/chat/38191075/
 ---

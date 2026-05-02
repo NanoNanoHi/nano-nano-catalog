@@ -6,7 +6,7 @@ desc: This Valentine's day I mixed it up a bit. I told you guys I wanted to try
   seductively commanding your every move in pleasuring yourself. >:3 And if
   you're a good boy, I will reward you for following along. .❤️ As always let me
   know what you think afterwards so I can always improve
-code: JOI 002
+code: "#NANO087"
 duration: 6:26
 thumb: https://nano-nano-thumbs.b-cdn.net/joi.png
 tags:

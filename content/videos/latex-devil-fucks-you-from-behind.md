@@ -12,6 +12,6 @@ thumb: https://nano-nano-thumbs.b-cdn.net/TOP%20100.png
 tags:
   - Top
   - VerticleScreen
-sale: true
+sale: false
 chatLink: https://onlyfans.com/my/chats/chat/38191075/
 ---
